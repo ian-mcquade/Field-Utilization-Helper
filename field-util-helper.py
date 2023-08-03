@@ -1,8 +1,10 @@
+import os
 import pandas as pd
 from tkinter import Tk, filedialog, Button, Label
 from tkinter import ttk 
 
-def calculate_field_utilization(filenames):
+
+def calculate_field_utilization(filenames, output_dir):
     total_files = len(filenames)
     for i, filename in enumerate(filenames):
         # Determine file type and load the data accordingly
@@ -34,35 +36,56 @@ def calculate_field_utilization(filenames):
         # Insert the original headers as the column names directly
         df.columns = headers
 
-        # Write the resulting dataframe to a new file
+        # Get the original file name (without extension)
+        base_filename = os.path.basename(filename)
+        base_filename_without_ext = os.path.splitext(base_filename)[0]
+
+        # Write the resulting dataframe to a new file in the selected output directory
         if filename.endswith('.xlsx'):
-            df.to_excel(filename.replace('.xlsx', '_new.xlsx'), index=False)
+            df.to_excel(os.path.join(output_dir, f"{base_filename_without_ext}_with_utilization.xlsx"), index=False)
         else: # .csv
-            df.to_csv(filename.replace('.csv', '_with_utilization.csv'), index=False)
+            df.to_csv(os.path.join(output_dir, f"{base_filename_without_ext}_with_utilization.csv"), index=False)
 
         # Update the progress bar
         progress['value'] = (i+1) / total_files * 100
         root.update_idletasks()  # Force redraw of the progress bar
 
+from tkinter import messagebox
+
 def select_files():
     root = Tk()
-    root.withdraw() # Hide the main window
-    root.call('wm', 'attributes', '.', '-topmost', True) # Bring the file selection dialog on top
-    filenames = filedialog.askopenfilenames() # This line will open file explorer to select one or multiple files
+    root.withdraw()  # Hide the main window
+    root.call('wm', 'attributes', '.', '-topmost', True)  # Bring the file selection dialog on top
+
+    # Select files
+    filenames = filedialog.askopenfilenames()  # This line will open file explorer to select one or multiple files
+
     if filenames:
-        calculate_field_utilization(filenames)
-        result_label.config(text=f"Processed {len(filenames)} file(s) successfully!")
+        # Show a message
+        messagebox.showinfo("Select Output Directory", "Please select the output directory for the new file(s).")
+        
+        # Select output directory
+        output_dir = filedialog.askdirectory()
+
+        if output_dir:
+            calculate_field_utilization(filenames, output_dir)
+            result_label.config(text=f"Processed {len(filenames)} file(s) successfully! New files are saved in {output_dir}")
+        else:
+            result_label.config(text="No output directory selected.")
+        
+        progress['value'] = 0  # Reset progress bar
     else:
         result_label.config(text="No files selected.")
-    progress['value'] = 0  # Reset progress bar
+
+
 
 root = Tk()
-root.title("Field Utilization Calculator")
+root.title("Field Utilization Helper")
 
 # Set window size
-root.geometry("400x200")
+root.geometry("600x200")
 
-label = Label(root, text="Click the button below to select Excel files:")
+label = Label(root, text="Click the button below to select Excel or CSV files:")
 label.pack()
 
 browse_button = Button(root, text="Select Files", command=select_files)
