@@ -21,7 +21,7 @@ def calculate_field_utilization(filenames, output_dir):
 
         # Clean the data - remove leading/trailing spaces and non-breaking spaces
         df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-        df = df.replace('\xa0', '', regex=True)
+        df = df.replace('\xa0', '', regex=True) #\xa0 is a non-breaking space in Unicode
 
         # Calculate field utilization
         total_records = len(df)
